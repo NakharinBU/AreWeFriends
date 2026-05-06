@@ -32,6 +32,8 @@ public class PlayerState : NetworkBehaviour
     public BoxCollider boxCollider;
     private bool cameraRegistered = false;
 
+    private bool applied = false;
+
     private void Awake()
     {
         boardController = GetComponent<PlayerController>();
@@ -93,6 +95,8 @@ public class PlayerState : NetworkBehaviour
         if (mode == PlayerMode.Board)
         {
 
+            var da = GetComponent<PlayerDoubleAgent>();
+
             if (IsServer)
             {
                 var controller = GetComponent<PlayerController>();
@@ -100,20 +104,19 @@ public class PlayerState : NetworkBehaviour
                 {
                     controller.RestorePreviousTeam();
                 }
+                if (da != null)
+                {
+                    da.ResetStateServer();
+                }
+
             }
-
-            ShowPlayer();
-
-            var da = GetComponent<PlayerDoubleAgent>();
 
             if (da != null)
             {
-                da.hp.Value = 100;
-                da.canMove.Value = true;
-                da.isDead = false;
-
                 da.SetVisible(true);
             }
+
+            ShowPlayer();
 
             if (netRb != null)
                 netRb.enabled = false;

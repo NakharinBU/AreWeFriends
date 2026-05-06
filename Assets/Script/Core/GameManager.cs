@@ -41,6 +41,11 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private string ffaScene = "Minigame_FFA";
     [SerializeField] private string snowballScene = "Minigame_Snow";
 
+    public NetworkVariable<bool> gameEnded = new NetworkVariable<bool>(false);
+    public NetworkVariable<ulong> winnerClientId = new NetworkVariable<ulong>(0);
+
+    public NetworkList<PlayerLeaderboardData> leaderboard = new NetworkList<PlayerLeaderboardData>();
+
     void SpawnAllPlayers()
     {
         for (int i = 0; i < NetworkManager.Singleton.ConnectedClientsList.Count; i++)
@@ -140,6 +145,9 @@ public class GameManager : NetworkBehaviour
         gameStarted.Value = true;
 
         SpawnAllPlayers();
+
+        UpdateLeaderboard();
+
         StartCoroutine(AssignTeamDelayed());
     }
 
@@ -152,6 +160,8 @@ public class GameManager : NetworkBehaviour
 
     public void RollDice(ulong senderId)
     {
+        if (gameEnded.Value) return;
+
         if (playerIds.Count == 0) return;
 
         if (senderId != playerIds[currentPlayerIndex.Value])
@@ -177,7 +187,9 @@ public class GameManager : NetworkBehaviour
         yield return player.MoveRoutine(steps);
 
         TriggerTileEvent(player, player.currentTileIndex.Value);
-        
+
+        StartCoroutine(UpdateLeaderboardDelay());
+
         NextTurn();
 
         yield return new WaitForSeconds(0.5f);
@@ -242,6 +254,7 @@ public class GameManager : NetworkBehaviour
         {
             case TileType.Coin:
                 player.coin.Value += tile.coinAmount;
+                CheckWinCondition(player);
                 break;
 
             case TileType.Damage:
@@ -430,6 +443,67 @@ public class GameManager : NetworkBehaviour
             agent.team.Value = newTeam;
 
             Debug.Log($"[DOUBLE AGENT] {agent.OwnerClientId} {original} -> {newTeam}");
+        }
+    }
+
+    void CheckWinCondition(PlayerController player)
+    {
+        if (!IsServer) return;
+        if (gameEnded.Value) return;
+
+        if (player.coin.Value >= 500)
+        {
+            gameEnded.Value = true;
+            winnerClientId.Value = player.OwnerClientId;
+
+            Debug.Log($"🏆 Player {player.OwnerClientId} WIN!");
+
+            StartCoroutine(EndGameRoutine());
+        }
+    }
+
+    IEnumerator EndGameRoutine()
+    {
+        Debug.Log("Game Ending...");
+
+        yield return new WaitForSeconds(1f);
+
+        // หยุดการเล่น (กัน Roll / Turn ต่อ)
+        shouldEnterMinigame = false;
+        isInMinigame = false;
+
+        // TODO: โหลด Win Scene หรือโชว์ UI
+        // NetworkSceneLoader.Instance.LoadScene("WinScene");
+    }
+
+    IEnumerator UpdateLeaderboardDelay()
+    {
+        yield return new WaitForSeconds(0.1f);
+        UpdateLeaderboard();
+    }
+
+    public void UpdateLeaderboard()
+    {
+        if (!IsServer) return;
+
+        leaderboard.Clear();
+
+        foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+        {
+            if (client.PlayerObject == null) continue;
+
+            var player = client.PlayerObject.GetComponent<PlayerController>();
+            if (player == null) continue;
+
+            PlayerLeaderboardData data = new PlayerLeaderboardData
+            {
+                clientId = client.ClientId,
+                coin = player.coin.Value,
+                hp = player.hp.Value,
+                tileIndex = player.currentTileIndex.Value
+            };
+
+            leaderboard.Add(data);
         }
     }
 }

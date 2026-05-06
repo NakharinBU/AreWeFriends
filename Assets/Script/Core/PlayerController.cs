@@ -1,4 +1,4 @@
-using Unity.Netcode;
+﻿using Unity.Netcode;
 using UnityEngine;
 using System.Collections;
 using Unity.Netcode.Components;
@@ -175,17 +175,19 @@ public class PlayerController : NetworkBehaviour
     {
         team.OnValueChanged += (oldTeam, newTeam) =>
         {
-            SetColor(newTeam);
+            if (newTeam != TeamType.None)
+                SetColor(newTeam);
         };
 
-        SetColor(team.Value);
+        if (team.Value != TeamType.None)
+            SetColor(team.Value);
     }
 
     void SetColor(TeamType teamType)
     {
         if (characterRenderer == null) return;
 
-        Color color = Color.white;
+        Color color;
 
         switch (teamType)
         {
@@ -193,6 +195,10 @@ public class PlayerController : NetworkBehaviour
             case TeamType.Blue: color = Color.blue; break;
             case TeamType.Green: color = Color.green; break;
             case TeamType.Yellow: color = Color.yellow; break;
+
+            default:
+                color = new Color(0.7f, 0.7f, 0.7f);
+                break;
         }
 
         characterRenderer.material.color = color;

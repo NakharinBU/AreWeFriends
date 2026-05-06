@@ -143,4 +143,13 @@ public class PlayerDoubleAgent : NetworkBehaviour
         foreach (var c in GetComponentsInChildren<Collider>())
             c.enabled = state;
     }
+
+    public void ResetStateServer()
+    {
+        if (!IsServer) return;
+
+        hp.Value = 100;
+        canMove.Value = true;
+        isDead = false;
+    }
 }

@@ -57,7 +57,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2870882473
+  GlobalObjectIdHash: 4079270985
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -330,10 +330,16 @@ MonoBehaviour:
       MinSecondsBetweenUpdates: 0
       MaxSecondsBetweenUpdates: 0
     m_InternalValue: 0
+  hp:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 100
   bulletPrefab: {fileID: 3721740358027684559, guid: 56c450e564a5c4b4bbcec513591c9a89, type: 3}
   shootPoint: {fileID: 5250717064419306808}
   shootForce: 15
   shootCooldown: 0.5
+  isDead: 0
 --- !u!1 &2840935035649840626
 GameObject:
   m_ObjectHideFlags: 0
