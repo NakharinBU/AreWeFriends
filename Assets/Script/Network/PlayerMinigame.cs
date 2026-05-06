@@ -31,6 +31,8 @@ public class PlayerMinigame : NetworkBehaviour
 
     public Transform visualRoot;
 
+    [SerializeField] private Animator animator;
+
     private void OnEnable()
     {
         if (inputReader != null)
@@ -68,6 +70,10 @@ public class PlayerMinigame : NetworkBehaviour
     {
         if (!IsOwner || !canMove.Value || !isAlive) return;
 
+        float speed = rb.velocity.magnitude;
+
+        animator.SetFloat("Speed", speed);
+
         SendInputServerRpc(moveDirection);
     }
 
@@ -99,6 +105,7 @@ public class PlayerMinigame : NetworkBehaviour
 
         lastMoveDirection = dir;
     }
+
 
 
     void TryShockwave()

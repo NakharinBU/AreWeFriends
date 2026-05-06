@@ -5,6 +5,11 @@ public class ScoreOrb : NetworkBehaviour
 {
     public int score = 10;
 
+    public override void OnNetworkDespawn()
+    {
+        Destroy(gameObject);
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         if (!IsServer) return;

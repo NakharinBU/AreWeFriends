@@ -50,17 +50,25 @@ public class PlayerState : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         currentMode.OnValueChanged += OnModeChanged;
+        currentMinigameType.OnValueChanged += OnMinigameChanged;
 
         StartCoroutine(ForceInit());
+    }
+
+    void OnMinigameChanged(MinigameType oldType, MinigameType newType)
+    {
+        if (currentMode.Value == PlayerMode.Minigame)
+        {
+            ApplyMode(PlayerMode.Minigame);
+        }
     }
 
     IEnumerator ForceInit()
     {
         yield return new WaitUntil(() => IsSpawned);
 
-        yield return new WaitForSeconds(0.1f);
+        yield return new WaitForSeconds(0.2f);
 
-        Debug.Log("FORCE APPLY MODE");
         ApplyMode(currentMode.Value);
     }
 
@@ -107,6 +115,7 @@ public class PlayerState : NetworkBehaviour
                 if (da != null)
                 {
                     da.ResetStateServer();
+                    da.gunActive.Value = false;
                 }
 
             }
@@ -117,9 +126,6 @@ public class PlayerState : NetworkBehaviour
             }
 
             ShowPlayer();
-
-            if (netRb != null)
-                netRb.enabled = false;
 
             if (boardController != null)
                 boardController.enabled = true;
@@ -138,8 +144,7 @@ public class PlayerState : NetworkBehaviour
             if (input != null)
                 input.enabled = true;
 
-            rb.isKinematic = true;
-            rb.useGravity = false;
+            StartCoroutine(ApplyBoardPhysics());
         }
 
         if (mode == PlayerMode.Minigame)
@@ -147,14 +152,10 @@ public class PlayerState : NetworkBehaviour
             if (boardController != null)
                 boardController.enabled = false;
 
-            if (netRb != null)
-                netRb.enabled = true;
-
             if (input != null)
                 input.enabled = true;
 
-            rb.isKinematic = false;
-            rb.useGravity = true;
+            StartCoroutine(ApplyMinigamePhysics());
 
             var type = currentMinigameType.Value;
 
@@ -169,20 +170,19 @@ public class PlayerState : NetworkBehaviour
                         controller.team.Value = TeamType.None;
                     }
                 }
+
+                DisableAllModes();
                 minigameController.enabled = true;
-                snowController.enabled = false;
-                doubleAgentController.enabled = false;
             }
             else if (type == MinigameType.Snowball)
             {
-                minigameController.enabled = false;
-                doubleAgentController.enabled = false;
+                DisableAllModes();
                 snowController.enabled = true;
             }
             else if (type == MinigameType.DoubleAgent)
             {
-                minigameController.enabled = false;
-                snowController.enabled = false;
+                Debug.Log($"DoubleAgent Enabled: {doubleAgentController.enabled} | Owner: {IsOwner}");
+                DisableAllModes();
                 doubleAgentController.enabled = true;
             }
         }
@@ -211,6 +211,46 @@ public class PlayerState : NetworkBehaviour
         var colliders = GetComponentsInChildren<Collider>();
         foreach (var c in colliders)
             c.enabled = true;
+    }
+
+    IEnumerator ApplyMinigamePhysics()
+    {
+        yield return null;
+
+        if (IsServer)
+        {
+            rb.isKinematic = false;
+            rb.useGravity = true;
+        }
+
+        if (netRb != null)
+            netRb.enabled = true;
+    }
+
+    IEnumerator ApplyBoardPhysics()
+    {
+        yield return null;
+
+        if (IsServer)
+        {
+            rb.isKinematic = true;
+            rb.useGravity = false;
+
+            rb.velocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
+        if (netRb != null)
+            netRb.enabled = false;
+    }
+
+
+
+    void DisableAllModes()
+    {
+        if (minigameController) minigameController.enabled = false;
+        if (snowController) snowController.enabled = false;
+        if (doubleAgentController) doubleAgentController.enabled = false;
     }
 
 }

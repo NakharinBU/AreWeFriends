@@ -99,6 +99,13 @@ public class NetworkSceneLoader : NetworkBehaviour
             if (state != null && state.IsSpawned)
             {
                 state.SetMode(PlayerMode.Minigame);
+
+                if (state.currentMinigameType.Value == MinigameType.DoubleAgent)
+                {
+                    var da = state.GetComponent<PlayerDoubleAgent>();
+                    da.ResetStateServer();
+                    da.InitDoubleAgentServer();
+                }
             }
         }
     }
@@ -108,6 +115,12 @@ public class NetworkSceneLoader : NetworkBehaviour
         if (!IsServer) return;
 
         string sceneName = "";
+
+        foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+        {
+            var state = client.PlayerObject.GetComponent<PlayerState>();
+            state.currentMinigameType.Value = type;
+        }
 
         switch (type)
         {

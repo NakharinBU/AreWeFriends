@@ -26,6 +26,7 @@ public class PlayerSnowballMinigame : NetworkBehaviour
     public InputReader inputReader;
     public Transform visualRoot;
 
+    [SerializeField] Animator animator;
     private void OnEnable()
     {
         if (inputReader != null)
@@ -49,6 +50,10 @@ public class PlayerSnowballMinigame : NetworkBehaviour
     void FixedUpdate()
     {
         if (!IsOwner || !canMove.Value || !isAlive) return;
+
+        float speed = rb.velocity.magnitude;
+
+        animator.SetFloat("Speed", speed);
 
         SendInputServerRpc(moveDirection);
     }
@@ -80,7 +85,6 @@ public class PlayerSnowballMinigame : NetworkBehaviour
         visualRoot.localRotation = Quaternion.Euler(0, offset, 0);
 
         lastMoveDirection = dir;
-
     }
 
     void TryShoot()
@@ -94,6 +98,11 @@ public class PlayerSnowballMinigame : NetworkBehaviour
     [ServerRpc]
     void ShootServerRpc(Vector3 dir)
     {
+        if (dir.sqrMagnitude < 0.01f)
+            dir = transform.forward;
+
+        dir = transform.forward;
+
         Quaternion rot = Quaternion.LookRotation(dir);
 
         var obj = Instantiate(projectilePrefab, shootPoint.position, rot);
@@ -104,35 +113,6 @@ public class PlayerSnowballMinigame : NetworkBehaviour
 
         var proj = obj.GetComponent<SnowProjectile>();
         proj.ownerId = OwnerClientId;
-    }
-
-    private void OnCollisionStay(Collision collision)
-    {
-        if (!IsOwner) return;
-
-        var ball = collision.collider.GetComponent<Snowball>();
-
-        if (ball != null)
-        {
-            PushBallServerRpc(ball.NetworkObjectId, lastMoveDirection);
-        }
-    }
-
-    [ServerRpc]
-    void PushBallServerRpc(ulong ballId, Vector3 dir)
-    {
-        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.ContainsKey(ballId))
-            return;
-
-        var ball = NetworkManager.Singleton.SpawnManager
-            .SpawnedObjects[ballId]
-            .GetComponent<Snowball>();
-
-        if (ball != null)
-        {
-            ball.AddForce(dir, pushForce);
-            ball.Grow(0.02f);
-        }
     }
 
     void OnMove(Vector3 input)

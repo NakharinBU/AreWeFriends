@@ -284,11 +284,9 @@ public class GameManager : NetworkBehaviour
 
         isInMinigame = true;
 
-        /*currentMinigame.Value = (Random.value > 0.5f)
-            ? MinigameType.FFA
-            : MinigameType.Snowball;*/
+        currentMinigame.Value = MinigameType.Snowball;
 
-        int rnd = Random.Range(1,4);
+        /*int rnd = Random.Range(1,4);
 
         switch (rnd)
         {
@@ -302,7 +300,7 @@ public class GameManager : NetworkBehaviour
                 currentMinigame.Value = MinigameType.DoubleAgent;
                 AssignDoubleAgentTeams();
                 break;
-        }
+        }*/
 
         foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
         {

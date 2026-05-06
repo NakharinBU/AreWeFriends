@@ -19,7 +19,9 @@ public class PlayerController : NetworkBehaviour
     
     public Transform visualRoot;
     private PlayerState state;
-    
+
+    [SerializeField] private Animator animator;
+
     private void Awake()
     {
         state = GetComponent<PlayerState>();
@@ -62,6 +64,8 @@ public class PlayerController : NetworkBehaviour
 
         int totalTiles = BoardManager.Instance.tiles.Count;
 
+        animator.SetBool("isWalking", true);
+
         for (int i = 0; i < steps; i++)
         {
             int nextTile = (currentTile + 1) % totalTiles;
@@ -95,6 +99,9 @@ public class PlayerController : NetworkBehaviour
                 yield return null;
             }
         }
+
+        animator.SetBool("isWalking", false);
+
     }
 
     public bool IsMyTurn()

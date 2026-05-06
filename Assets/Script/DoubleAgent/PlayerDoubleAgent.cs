@@ -24,12 +24,29 @@ public class PlayerDoubleAgent : NetworkBehaviour
 
     public bool isDead = false;
 
+    [SerializeField] Animator animator;
+
+    public GameObject gunModel;
+    public NetworkVariable<bool> gunActive = new NetworkVariable<bool>(false);
+    private bool initialized = false;
+
+
     public override void OnNetworkSpawn()
     {
+        gunActive.OnValueChanged += OnGunChanged;
+
+        OnGunChanged(false, gunActive.Value);
+
         if (IsServer)
         {
             hp.Value = 100;
+            gunActive.Value = true;
         }
+    }
+
+    void OnGunChanged(bool oldVal, bool newVal)
+    {
+        gunModel.SetActive(newVal);
     }
 
     void Update()
@@ -54,6 +71,10 @@ public class PlayerDoubleAgent : NetworkBehaviour
     void FixedUpdate()
     {
         if (!IsOwner || !canMove.Value) return;
+
+        float speed = rb.velocity.magnitude;
+
+        animator.SetFloat("Speed", speed);
 
         MoveServerRpc(moveDir);
     }
@@ -87,6 +108,8 @@ public class PlayerDoubleAgent : NetworkBehaviour
 
         if (dir.sqrMagnitude < 0.01f)
             dir = transform.forward;
+
+        dir = transform.forward;
 
         Quaternion rot = Quaternion.LookRotation(dir);
 
@@ -132,6 +155,7 @@ public class PlayerDoubleAgent : NetworkBehaviour
 
         isDead = true;
         canMove.Value = false;
+        gunActive.Value = false;
         SetVisible(false);
     }
 
@@ -147,9 +171,24 @@ public class PlayerDoubleAgent : NetworkBehaviour
     public void ResetStateServer()
     {
         if (!IsServer) return;
+        initialized = false;
 
         hp.Value = 100;
         canMove.Value = true;
         isDead = false;
+        gunActive.Value = false;
+    }
+
+    public void InitDoubleAgentServer()
+    {
+        if (!IsServer) return;
+        if (initialized) return;
+
+        initialized = true;
+
+        hp.Value = 100;
+        canMove.Value = true;
+        isDead = false;
+        gunActive.Value = true;
     }
 }

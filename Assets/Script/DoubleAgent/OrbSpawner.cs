@@ -8,6 +8,8 @@ public class OrbSpawner : NetworkBehaviour
     public Transform[] spawnPoints;
 
     public float spawnInterval = 3f;
+    public int maxSpawn = 5;
+    public int currentSpawn = 0;
 
     public override void OnNetworkSpawn()
     {
@@ -20,12 +22,17 @@ public class OrbSpawner : NetworkBehaviour
     {
         while (true)
         {
+            if (currentSpawn < maxSpawn)
+            {
+                Transform point = spawnPoints[Random.Range(0, spawnPoints.Length)];
+
+                var orb = Instantiate(orbPrefab, point.position, Quaternion.identity);
+                orb.GetComponent<NetworkObject>().Spawn();
+
+                currentSpawn++;
+            }
+
             yield return new WaitForSeconds(spawnInterval);
-
-            Transform point = spawnPoints[Random.Range(0, spawnPoints.Length)];
-
-            var orb = Instantiate(orbPrefab, point.position, Quaternion.identity);
-            orb.GetComponent<NetworkObject>().Spawn();
         }
     }
 }

@@ -103,7 +103,7 @@ SphereCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2266790766806480455}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: d44b78a9ec07df8459d0bf6c3cd462b7, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -156,9 +156,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Snowball
   ShowTopMostFoldoutHeaderGroup: 1
   team: 0
+  teamNet:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
   size: 1
   maxSize: 5
+  shrinkDelay: 1.5
+  shrinkSpeed: 0.5
   rb: {fileID: 2304892787628468084}
+  meshRenderer: {fileID: 4893621065799233951}
+  redMat: {fileID: 2100000, guid: db55f2b9cd82b90498e0c43a9b405f28, type: 2}
+  blueMat: {fileID: 2100000, guid: dcb127f9334ab40448b4dbcec04a3902, type: 2}
+  yellowMat: {fileID: 2100000, guid: 2870f72c4fbfc3e4992e159386088cde, type: 2}
+  greenMat: {fileID: 2100000, guid: b42ac33a30d4bba45854df55d58aeea6, type: 2}
 --- !u!54 &2304892787628468084
 Rigidbody:
   m_ObjectHideFlags: 0
