@@ -46,6 +46,11 @@ public class GameManager : NetworkBehaviour
 
     public NetworkList<PlayerLeaderboardData> leaderboard = new NetworkList<PlayerLeaderboardData>();
 
+    public bool CanPlay()
+    {
+        return !gameEnded.Value;
+    }
+
     void SpawnAllPlayers()
     {
         for (int i = 0; i < NetworkManager.Singleton.ConnectedClientsList.Count; i++)
@@ -120,6 +125,8 @@ public class GameManager : NetworkBehaviour
         {
             pendingNextTurn = false;
         }
+
+        StartCoroutine(UpdateLeaderboardDelay());
     }
 
     void CheckStartGame()
@@ -259,6 +266,12 @@ public class GameManager : NetworkBehaviour
 
             case TileType.Damage:
                 player.hp.Value -= tile.damageAmount;
+
+                if (player.hp.Value <= 0)
+                {
+                    HandlePlayerDeath(player);
+                }
+
                 break;
 
             case TileType.Minigame:
@@ -284,9 +297,9 @@ public class GameManager : NetworkBehaviour
 
         isInMinigame = true;
 
-        currentMinigame.Value = MinigameType.Snowball;
+        //currentMinigame.Value = MinigameType.Snowball;
 
-        /*int rnd = Random.Range(1,4);
+        int rnd = Random.Range(1,4);
 
         switch (rnd)
         {
@@ -300,7 +313,7 @@ public class GameManager : NetworkBehaviour
                 currentMinigame.Value = MinigameType.DoubleAgent;
                 AssignDoubleAgentTeams();
                 break;
-        }*/
+        }
 
         foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
         {
@@ -454,7 +467,7 @@ public class GameManager : NetworkBehaviour
             gameEnded.Value = true;
             winnerClientId.Value = player.OwnerClientId;
 
-            Debug.Log($"🏆 Player {player.OwnerClientId} WIN!");
+            Debug.Log($"Player {player.OwnerClientId} WIN!");
 
             StartCoroutine(EndGameRoutine());
         }
@@ -464,14 +477,12 @@ public class GameManager : NetworkBehaviour
     {
         Debug.Log("Game Ending...");
 
-        yield return new WaitForSeconds(1f);
-
-        // หยุดการเล่น (กัน Roll / Turn ต่อ)
         shouldEnterMinigame = false;
         isInMinigame = false;
 
-        // TODO: โหลด Win Scene หรือโชว์ UI
-        // NetworkSceneLoader.Instance.LoadScene("WinScene");
+        yield return new WaitForSeconds(1f);
+
+        UpdateLeaderboard();
     }
 
     IEnumerator UpdateLeaderboardDelay()
@@ -503,5 +514,42 @@ public class GameManager : NetworkBehaviour
 
             leaderboard.Add(data);
         }
+    }
+
+    void HandlePlayerDeath(PlayerController player)
+    {
+        if (!IsServer) return;
+
+        Debug.Log($"Player {player.OwnerClientId} DIED");
+
+        player.coin.Value = Mathf.Max(0, player.coin.Value - 300);
+
+        player.hp.Value = 100;
+
+    }
+
+    [ContextMenu("DEBUG / Force Win Player 0")]
+    public void ForceWinPlayer0()
+    {
+        if (!IsServer)
+        {
+            Debug.LogWarning("ForceWin can only run on Server");
+            return;
+        }
+
+        if (playerIds.Count == 0)
+        {
+            Debug.LogWarning("No players in game");
+            return;
+        }
+
+        ulong fakeWinnerId = playerIds[0];
+
+        gameEnded.Value = true;
+        winnerClientId.Value = fakeWinnerId;
+
+        Debug.Log($"[FORCE WIN] Player {fakeWinnerId} is winner");
+
+        StartCoroutine(EndGameRoutine());
     }
 }

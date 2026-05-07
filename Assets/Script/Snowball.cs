@@ -8,7 +8,9 @@ public class Snowball : NetworkBehaviour
     public NetworkVariable<TeamType> teamNet = new NetworkVariable<TeamType>();
 
     public float size = 1f;
-    public float maxSize = 5f;
+    public float maxSize = 3f;
+
+    public bool scored = false;
 
     [Header("Decay")]
     public float shrinkDelay = 1.5f;
@@ -72,8 +74,14 @@ public class Snowball : NetworkBehaviour
 
     void Respawn()
     {
-        var netObj = GetComponent<NetworkObject>();
-        netObj.Despawn();
+        size = 1f;
+        transform.localScale = Vector3.one * size;
+
+        rb.velocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+
+        transform.position = spawnPosition;
+        transform.rotation = spawnRotation;
     }
 
     private void OnCollisionStay(Collision collision)

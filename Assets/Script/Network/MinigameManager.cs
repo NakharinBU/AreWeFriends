@@ -86,30 +86,33 @@ public class MinigameManager : NetworkBehaviour
         }
     }
 
-    public void TeamWin(TeamType team)
+    public void TeamWin(ulong scorerClientId)
     {
         if (!IsServer || gameEnded) return;
 
         gameEnded = true;
 
-        Debug.Log($"Team {team} WIN!");
-
-        StartCoroutine(EndGameTeamRoutine(team));
+        StartCoroutine(EndGameTeamRoutine(scorerClientId));
     }
 
-    IEnumerator EndGameTeamRoutine(TeamType winnerTeam)
+    IEnumerator EndGameTeamRoutine(ulong winnerId)
     {
-        foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+        foreach (var obj in NetworkManager.Singleton.SpawnManager.SpawnedObjectsList)
         {
-            var player = client.PlayerObject.GetComponent<PlayerController>();
+            var player = obj.GetComponent<PlayerController>();
 
-            if (player.team.Value == winnerTeam)
+            if (player == null) continue;
+
+            if (player.OwnerClientId == winnerId)
             {
                 player.coin.Value += 100;
+
+                Debug.Log($"Give 100 coin to {winnerId}");
             }
         }
 
         yield return new WaitForSeconds(3f);
+
         ReturnToBoard();
     }
 

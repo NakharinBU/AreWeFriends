@@ -27,4 +27,9 @@ public class RelayUI : MonoBehaviour
 
         await RelayManager.Instance.JoinRelay(code);
     }
+
+    public void OnClickQuit()
+    {
+        Application.Quit();
+    }
 }

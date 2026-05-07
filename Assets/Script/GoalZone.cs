@@ -11,9 +11,21 @@ public class GoalZone : NetworkBehaviour
 
         var ball = other.GetComponent<Snowball>();
 
-        if (ball != null && ball.team == team)
+        if (ball == null) return;
+
+        if (ball.scored) return;
+
+        Debug.Log($"Ball Team = {ball.team} | Goal Team = {team}");
+
+        if (ball.team == team)
         {
-            MinigameManager.Instance.TeamWin(team);
+            ball.scored = true;
+
+            Debug.Log("TEAM SCORE!");
+
+            MinigameManager.Instance.TeamWin(ball.OwnerClientId);
+
+            ball.GetComponent<NetworkObject>().Despawn();
         }
     }
 }

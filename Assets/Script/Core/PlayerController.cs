@@ -5,7 +5,7 @@ using Unity.Netcode.Components;
 
 public class PlayerController : NetworkBehaviour
 {
-    public float moveSpeed = 3f;
+    public float moveSpeed = 50f;
     private int currentTile = 0;
     
     [SerializeField] private Renderer characterRenderer;
@@ -61,6 +61,7 @@ public class PlayerController : NetworkBehaviour
     public IEnumerator MoveRoutine(int steps)
     {
         if (!IsServer) yield break;
+
 
         int totalTiles = BoardManager.Instance.tiles.Count;
 
@@ -175,7 +176,9 @@ public class PlayerController : NetworkBehaviour
             Mathf.Sin(rad)
         ) * radius;
 
-        return basePos + offset;
+        float heightOffset = characterRenderer.bounds.extents.y;
+
+        return basePos + offset + Vector3.up * heightOffset;
     }
 
     void ApplyTeamColor()
