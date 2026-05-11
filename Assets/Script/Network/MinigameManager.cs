@@ -86,16 +86,16 @@ public class MinigameManager : NetworkBehaviour
         }
     }
 
-    public void TeamWin(ulong scorerClientId)
+    public void TeamWin(TeamType winningTeam)
     {
         if (!IsServer || gameEnded) return;
 
         gameEnded = true;
 
-        StartCoroutine(EndGameTeamRoutine(scorerClientId));
+        StartCoroutine(EndGameTeamRoutine(winningTeam));
     }
 
-    IEnumerator EndGameTeamRoutine(ulong winnerId)
+    IEnumerator EndGameTeamRoutine(TeamType winningTeam)
     {
         foreach (var obj in NetworkManager.Singleton.SpawnManager.SpawnedObjectsList)
         {
@@ -103,11 +103,9 @@ public class MinigameManager : NetworkBehaviour
 
             if (player == null) continue;
 
-            if (player.OwnerClientId == winnerId)
+            if (player.team.Value == winningTeam) // ต้องมี team ใน player
             {
                 player.coin.Value += 100;
-
-                Debug.Log($"Give 100 coin to {winnerId}");
             }
         }
 

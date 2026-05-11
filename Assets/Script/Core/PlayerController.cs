@@ -14,13 +14,17 @@ public class PlayerController : NetworkBehaviour
     public NetworkVariable<int> hp = new NetworkVariable<int>(100);
     public NetworkVariable<int> currentTileIndex = new NetworkVariable<int>(0);
     public NetworkVariable<TeamType> team = new NetworkVariable<TeamType>(TeamType.None);
-    
-    private TeamType previousTeam = TeamType.None;
-    
+
+    public bool canSetPrevious = true;
+
+    public NetworkVariable<TeamType> previousTeam =
+    new NetworkVariable<TeamType>(TeamType.None);
+
     public Transform visualRoot;
     private PlayerState state;
 
     [SerializeField] private Animator animator;
+
 
     private void Awake()
     {
@@ -216,13 +220,20 @@ public class PlayerController : NetworkBehaviour
 
     public void SaveCurrentTeam()
     {
-        previousTeam = team.Value;
+        if (!IsServer) return;
+
+        previousTeam.Value = team.Value;
     }
 
 
     public void RestorePreviousTeam()
     {
-        team.Value = previousTeam;
+        if (!IsServer) return;
+
+        if (previousTeam.Value != TeamType.None)
+        {
+            team.Value = previousTeam.Value;
+        }
     }
 
 }

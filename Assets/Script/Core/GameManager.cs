@@ -46,6 +46,8 @@ public class GameManager : NetworkBehaviour
 
     public NetworkList<PlayerLeaderboardData> leaderboard = new NetworkList<PlayerLeaderboardData>();
 
+    public bool canRoll = true;
+
     public bool CanPlay()
     {
         return !gameEnded.Value;
@@ -77,7 +79,10 @@ public class GameManager : NetworkBehaviour
 
             Debug.Log("Spawn Player: " + clientId);
         }
+
+        StartCoroutine(AssignTeamDelayed());
     }
+
 
     public override void OnNetworkSpawn()
     {
@@ -154,13 +159,21 @@ public class GameManager : NetworkBehaviour
         SpawnAllPlayers();
 
         UpdateLeaderboard();
-
-        StartCoroutine(AssignTeamDelayed());
     }
 
     IEnumerator AssignTeamDelayed()
     {
-        yield return new WaitForSeconds(0.2f);
+        yield return new WaitUntil(() =>
+        {
+            foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+            {
+                if (client.PlayerObject == null)
+                    return false;
+            }
+            return true;
+        });
+
+        yield return null;
 
         AssignTeams();
     }
@@ -168,11 +181,14 @@ public class GameManager : NetworkBehaviour
     public void RollDice(ulong senderId)
     {
         if (gameEnded.Value) return;
+        if (canRoll == false) return;
 
         if (playerIds.Count == 0) return;
 
         if (senderId != playerIds[currentPlayerIndex.Value])
             return;
+
+        canRoll = false;
 
         int roll = Random.Range(1, 7);
         diceValue.Value = roll;
@@ -198,6 +214,8 @@ public class GameManager : NetworkBehaviour
         StartCoroutine(UpdateLeaderboardDelay());
 
         NextTurn();
+
+        canRoll = true;
 
         yield return new WaitForSeconds(0.5f);
 
@@ -288,18 +306,23 @@ public class GameManager : NetworkBehaviour
     [ServerRpc]
     void RequestEnterMinigameServerRpc()
     {
-        EnterMinigame();
+        StartCoroutine(EnterMinigameRoutine());
     }
 
-    void EnterMinigame()
+    IEnumerator EnterMinigameRoutine()
     {
-        if (!IsServer || isInMinigame) return;
+        Debug.Log("Waiting for team sync before entering minigame...");
+
+        yield return new WaitForSeconds(0.2f);
+
+        Debug.Log("All teams ready → Enter Minigame");
 
         isInMinigame = true;
 
-        //currentMinigame.Value = MinigameType.Snowball;
+       currentMinigame.Value = MinigameType.DoubleAgent;
+        AssignDoubleAgentTeams();
 
-        int rnd = Random.Range(1,4);
+        /*int rnd = Random.Range(1,4);
 
         switch (rnd)
         {
@@ -313,7 +336,7 @@ public class GameManager : NetworkBehaviour
                 currentMinigame.Value = MinigameType.DoubleAgent;
                 AssignDoubleAgentTeams();
                 break;
-        }
+        }*/
 
         foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
         {
@@ -351,8 +374,6 @@ public class GameManager : NetworkBehaviour
 
     void AssignTeams()
     {
-        if (gameStarted.Value == false) return;
-
         List<ulong> shuffled = new List<ulong>();
 
         foreach (var id in playerIds)

@@ -15,15 +15,17 @@ public class GoalZone : NetworkBehaviour
 
         if (ball.scored) return;
 
-        Debug.Log($"Ball Team = {ball.team} | Goal Team = {team}");
+        Debug.Log($"Ball Team = {ball.teamNet.Value} | Goal Team = {team}");
 
-        if (ball.team == team)
+        if (ball.teamNet.Value == team)
         {
             ball.scored = true;
 
             Debug.Log("TEAM SCORE!");
 
-            MinigameManager.Instance.TeamWin(ball.OwnerClientId);
+            TeamType scoringTeam = ball.teamNet.Value;
+
+            MinigameManager.Instance.TeamWin(scoringTeam);
 
             ball.GetComponent<NetworkObject>().Despawn();
         }
