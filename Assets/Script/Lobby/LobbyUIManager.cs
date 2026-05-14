@@ -1,10 +1,13 @@
 using UnityEngine;
 using Unity.Netcode;
+using TMPro;
 
 public class LobbyUIManager : MonoBehaviour
 {
     public Transform playerListParent;
     public GameObject playerItemPrefab;
+    public TextMeshProUGUI playerCount;
+
 
     void Start()
     {
@@ -17,6 +20,12 @@ public class LobbyUIManager : MonoBehaviour
         RefreshUI();
     }
 
+    void OnDestroy()
+    {
+        if (LobbyManager.Instance != null)
+            LobbyManager.Instance.players.OnListChanged -= OnLobbyChanged;
+    }
+
     void RefreshUI()
     {
         foreach (Transform child in playerListParent)
@@ -27,5 +36,8 @@ public class LobbyUIManager : MonoBehaviour
             var item = Instantiate(playerItemPrefab, playerListParent);
             item.GetComponent<PlayerItemUI>().SetData(p);
         }
+
+
+        playerCount.text = $"Players: {LobbyManager.Instance.players.Count} / 8";
     }
 }
