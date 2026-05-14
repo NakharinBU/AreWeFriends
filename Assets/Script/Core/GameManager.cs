@@ -69,9 +69,20 @@ public class GameManager : NetworkBehaviour
 
             Transform spawn = spawnPoints.GetChild(i % spawnPoints.childCount);
 
+            SkinnedMeshRenderer renderer = playerPrefab.GetComponentInChildren<SkinnedMeshRenderer>();
+
+            float heightOffset = 1f;
+
+            if (renderer != null)
+            {
+                heightOffset = renderer.bounds.extents.y;
+            }
+
+            Vector3 spawnPos = spawn.position + new Vector3(0, heightOffset, 0);
+
             GameObject player = Instantiate(
                 playerPrefab,
-                spawn.position,
+                spawnPos,
                 spawn.rotation
             );
 
@@ -403,10 +414,7 @@ public class GameManager : NetworkBehaviour
 
         isInMinigame = true;
 
-       currentMinigame.Value = MinigameType.DoubleAgent;
-        AssignDoubleAgentTeams();
-
-        /*int rnd = Random.Range(1,4);
+        int rnd = Random.Range(1, 4);
 
         switch (rnd)
         {
@@ -420,7 +428,7 @@ public class GameManager : NetworkBehaviour
                 currentMinigame.Value = MinigameType.DoubleAgent;
                 AssignDoubleAgentTeams();
                 break;
-        }*/
+        }
 
         foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
         {
@@ -571,7 +579,7 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    void CheckWinCondition(PlayerController player)
+    public void CheckWinCondition(PlayerController player)
     {
         if (!IsServer) return;
         if (gameEnded.Value) return;

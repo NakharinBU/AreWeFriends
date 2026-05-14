@@ -256,13 +256,19 @@ public class PlayerController : NetworkBehaviour
     {
         while (true)
         {
-            if (IsOwner)
+            if (IsServer)
             {
-                PlayFootstep();
+                PlayFootstepClientRpc();
             }
 
             yield return new WaitForSeconds(footstepInterval);
         }
+    }
+
+    [ClientRpc]
+    void PlayFootstepClientRpc()
+    {
+        PlayFootstep();
     }
 
     void PlayFootstep()

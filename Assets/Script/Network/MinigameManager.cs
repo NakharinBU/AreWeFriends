@@ -103,9 +103,10 @@ public class MinigameManager : NetworkBehaviour
 
             if (player == null) continue;
 
-            if (player.team.Value == winningTeam) // ต้องมี team ใน player
+            if (player.team.Value == winningTeam)
             {
                 player.coin.Value += 100;
+                GameManager.Instance.CheckWinCondition(player);
             }
         }
 
@@ -128,6 +129,7 @@ public class MinigameManager : NetworkBehaviour
             if (player != null)
             {
                 player.coin.Value += 100;
+                GameManager.Instance.CheckWinCondition(player);
             }
         }
 
@@ -160,6 +162,10 @@ public class MinigameManager : NetworkBehaviour
         {
             if (obj.GetComponent<Snowball>() != null ||
                 obj.GetComponent<SnowProjectile>() != null)
+            {
+                obj.Despawn(true);
+            }
+            if (obj.GetComponent<ScoreOrb>() != null)
             {
                 obj.Despawn(true);
             }
