@@ -225,9 +225,9 @@ public class PlayerController : NetworkBehaviour
             case TeamType.Blue: color = Color.blue; break;
             case TeamType.Green: color = Color.green; break;
             case TeamType.Yellow: color = Color.yellow; break;
-
+            case TeamType.FFA: color = Color.white; break;
             default:
-                color = new Color(0.7f, 0.7f, 0.7f);
+                color = Color.gray;
                 break;
         }
 

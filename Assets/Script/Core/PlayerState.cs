@@ -177,7 +177,7 @@ public class PlayerState : NetworkBehaviour
                     if (controller != null)
                     {
                         controller.SaveCurrentTeam();
-                        controller.team.Value = TeamType.None;
+                        controller.team.Value = TeamType.FFA;
                     }
                 }
 

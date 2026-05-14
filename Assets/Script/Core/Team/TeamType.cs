@@ -6,5 +6,6 @@ public enum TeamType
     Red,
     Blue,
     Green,
-    Yellow
+    Yellow,
+    FFA
 }
