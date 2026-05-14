@@ -53,6 +53,8 @@ public class NetworkSceneLoader : NetworkBehaviour
         if (sceneName == "BoardScene")
         {
             StartCoroutine(WarpPlayersToBoard());
+
+            CameraManager.Instance.SetMode(CameraMode.Turn);
         }
     }
 
@@ -164,7 +166,7 @@ public class NetworkSceneLoader : NetworkBehaviour
 
         NetworkManager.Singleton.SceneManager.LoadScene(
             "BoardScene",
-            UnityEngine.SceneManagement.LoadSceneMode.Single
+            LoadSceneMode.Single
         );
     }
 }

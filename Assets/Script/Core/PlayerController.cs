@@ -25,6 +25,13 @@ public class PlayerController : NetworkBehaviour
 
     [SerializeField] private Animator animator;
 
+    [Header("Sound")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip[] footstepClips;
+
+    [SerializeField] private float footstepInterval = 0.4f;
+    private Coroutine footstepRoutine;
+
 
     private void Awake()
     {
@@ -71,6 +78,9 @@ public class PlayerController : NetworkBehaviour
 
         animator.SetBool("isWalking", true);
 
+        if (footstepRoutine != null) StopCoroutine(footstepRoutine);
+        footstepRoutine = StartCoroutine(FootstepRoutine());
+
         for (int i = 0; i < steps; i++)
         {
             int nextTile = (currentTile + 1) % totalTiles;
@@ -106,6 +116,12 @@ public class PlayerController : NetworkBehaviour
         }
 
         animator.SetBool("isWalking", false);
+
+        if (footstepRoutine != null)
+        {
+            StopCoroutine(footstepRoutine);
+            footstepRoutine = null;
+        }
 
     }
 
@@ -234,6 +250,27 @@ public class PlayerController : NetworkBehaviour
         {
             team.Value = previousTeam.Value;
         }
+    }
+
+    IEnumerator FootstepRoutine()
+    {
+        while (true)
+        {
+            if (IsOwner)
+            {
+                PlayFootstep();
+            }
+
+            yield return new WaitForSeconds(footstepInterval);
+        }
+    }
+
+    void PlayFootstep()
+    {
+        if (footstepClips.Length == 0) return;
+
+        AudioClip clip = footstepClips[Random.Range(0, footstepClips.Length)];
+        audioSource.PlayOneShot(clip);
     }
 
 }

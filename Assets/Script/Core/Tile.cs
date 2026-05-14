@@ -14,4 +14,21 @@ public class Tile : MonoBehaviour
 
     public int coinAmount = 10;
     public int damageAmount = 10;
+
+    [Header("Sound")]
+    public AudioClip sfx;
+    private AudioSource audioSource;
+
+    private void Awake()
+    {
+        audioSource = GetComponent<AudioSource>();
+    }
+
+    public void PlaySound()
+    {
+        if (sfx != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(sfx);
+        }
+    }
 }

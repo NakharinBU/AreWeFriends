@@ -1,6 +1,7 @@
 using Unity.Netcode;
 using UnityEngine;
 using System.Collections;
+using UnityEngine.SceneManagement;
 
 public class OrbSpawner : NetworkBehaviour
 {
@@ -15,13 +16,28 @@ public class OrbSpawner : NetworkBehaviour
     {
         if (!IsServer) return;
 
-        StartCoroutine(SpawnRoutine());
+        if (SceneManager.GetActiveScene().name == "Minigame_DoubleAgent")
+        {
+            StartCoroutine(SpawnRoutine());
+        }
+
+    }
+
+    private void OnDestroy()
+    {
+        StopAllCoroutines();
     }
 
     IEnumerator SpawnRoutine()
     {
         while (true)
         {
+            if (SceneManager.GetActiveScene().name != "Minigame_DoubleAgent")
+            {
+                yield return null;
+                continue;
+            }
+
             if (currentSpawn < maxSpawn)
             {
                 Transform point = spawnPoints[Random.Range(0, spawnPoints.Length)];

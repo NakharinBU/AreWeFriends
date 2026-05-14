@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Unity.Cinemachine;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -93,8 +94,33 @@ public class GameManager : NetworkBehaviour
             NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
 
             SceneManager.sceneLoaded += OnSceneLoaded;
-
         }
+
+        currentPlayerIndex.OnValueChanged += OnTurnChanged;
+
+    }
+
+
+    void OnTurnChanged(int oldIndex, int newIndex)
+    {
+        if (SceneManager.GetActiveScene().name != "BoardScene")
+            return;
+
+        ulong playerId = GetCurrentPlayerId();
+
+        if (!NetworkManager.Singleton.ConnectedClients.ContainsKey(playerId))
+            return;
+
+        var playerObj = NetworkManager
+            .Singleton
+            .ConnectedClients[playerId]
+            .PlayerObject;
+
+        if (playerObj == null) return;
+
+        Transform target = playerObj.transform;
+
+        CameraManager.Instance.SetTarget(target);
     }
 
     public override void OnNetworkDespawn()
@@ -132,6 +158,52 @@ public class GameManager : NetworkBehaviour
         }
 
         StartCoroutine(UpdateLeaderboardDelay());
+
+        if (scene.name == "BoardScene")
+        {
+            StartCoroutine(ForceUpdateCamera());
+        }
+    }
+
+    IEnumerator ForceUpdateCamera()
+    {
+        yield return new WaitUntil(() => CameraManager.Instance != null);
+
+        yield return new WaitUntil(() => FindObjectOfType<CinemachineCamera>() != null);
+
+        yield return new WaitUntil(() =>
+        {
+            foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+            {
+                if (client.PlayerObject == null)
+                    return false;
+            }
+            return true;
+        });
+
+        yield return null;
+
+        CameraManager.Instance.SetMode(CameraMode.Turn);
+        ForceUpdateTurnCamera();
+
+        Debug.Log("✅ Camera Force Updated (SAFE)");
+    }
+
+    public void ForceUpdateTurnCamera()
+    {
+        ulong playerId = GetCurrentPlayerId();
+
+        if (!NetworkManager.Singleton.ConnectedClients.ContainsKey(playerId))
+            return;
+
+        var playerObj = NetworkManager
+            .Singleton
+            .ConnectedClients[playerId]
+            .PlayerObject;
+
+        if (playerObj == null) return;
+
+        CameraManager.Instance.SetTarget(playerObj.transform);
     }
 
     void CheckStartGame()
@@ -268,12 +340,14 @@ public class GameManager : NetworkBehaviour
 
     public void TriggerTileEvent(PlayerController player, int tileIndex)
     {
-
         Tile tile = BoardManager.Instance.GetTile(tileIndex);
+
+        if (tile == null) return;
+
+        PlayTileSoundClientRpc(tileIndex);
 
         Debug.Log("TRIGGER TILE: " + tile.tileType);
 
-        if (tile == null) return;
 
         switch (tile.tileType)
         {
@@ -300,6 +374,16 @@ public class GameManager : NetworkBehaviour
         if (tileIndex == 0)
         {
             shouldEnterMinigame = true;
+        }
+    }
+
+    [ClientRpc]
+    void PlayTileSoundClientRpc(int tileIndex)
+    {
+        Tile tile = BoardManager.Instance.GetTile(tileIndex);
+        if (tile != null)
+        {
+            tile.PlaySound();
         }
     }
 
@@ -355,21 +439,30 @@ public class GameManager : NetworkBehaviour
     {
         yield return new WaitForSeconds(0.5f);
 
-        playerIds.Clear();
+        if (hasGameStartedServer)
+        {
+            Debug.Log("🚫 Skip Rebuild (Game Already Started)");
+            yield break;
+        }
+
+        var list = new List<ulong>();
 
         foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
         {
-            playerIds.Add(client.ClientId);
+            list.Add(client.ClientId);
+        }
+
+        playerIds.Clear();
+        foreach (var id in list)
+        {
+            playerIds.Add(id);
         }
 
         Debug.Log("Rebuild playerIds: " + playerIds.Count);
 
         currentPlayerIndex.Value = savedTurnIndex;
-        
-        if (!hasGameStartedServer)
-        {
-            CheckStartGame();
-        }
+
+        CheckStartGame();
     }
 
     void AssignTeams()
